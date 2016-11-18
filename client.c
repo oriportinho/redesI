@@ -22,8 +22,7 @@ void client(int port) {
 
   inet_pton(AF_INET,"127.0.0.1",&(servaddr.sin_addr));
 
-  connect(sockfd,(struct sockaddr *)&servaddr,sizeof(servaddr));
-
+  connect(port,(struct sockaddr *)&servaddr,sizeof(servaddr));
 
   while(true) {
     bzero(sendline, 100);
@@ -57,8 +56,10 @@ void client(int port) {
 
 void server(int port) {
   // char buffer[100];
-  int sockfd, newsockfd, listen_fd;
+  int newsockfd, listen_fd;
   socklen_t clilen;
+
+  printf("Port: %d, NewSockFd: %d, Listen_fd: %d\n", port, newsockfd, listen_fd);
 
   struct sockaddr_in servaddr, cli_addr;
   int pid;
@@ -66,6 +67,8 @@ void server(int port) {
   listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 
   bzero(&servaddr, sizeof(servaddr));
+
+  printf("Port: %d\n", servaddr.sin_port);
 
   servaddr.sin_family = AF_INET;
   servaddr.sin_addr.s_addr = htons(INADDR_ANY);
@@ -76,11 +79,15 @@ void server(int port) {
     exit(1);
   }
 
-  listen(sockfd,5);
+printf("Port: %d, NewSockFd: %d, Listen_fd: %d\n", port, newsockfd, listen_fd);
+
+  listen(listen_fd, 5);
   clilen = sizeof(cli_addr);
 
 	while(true) {
-    newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+    newsockfd = accept(listen_fd, (struct sockaddr *) &cli_addr, &clilen);
+
+printf("Port: %d, NewSockFd: %d, Listen_fd: %d\n", port, newsockfd, listen_fd);
 
 		if(newsockfd < 0) {
 			perror("ERROR on accept");
@@ -96,7 +103,6 @@ void server(int port) {
 		}
 
 		if(pid == 0) {
-			close(sockfd);
       int n;
       char bufferb[256];
 
@@ -108,7 +114,7 @@ void server(int port) {
         exit(1);
       }
 
-			printf("Stranger: %s\n", bufferb);
+			printf("Port say: %s\n", bufferb);
 
 			exit(0);
 
