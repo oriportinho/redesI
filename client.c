@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
 
   int port_server = atoi(argv[1]);
   int port_client;
-  
+
   printf("What is a destiny port?\n");
   scanf("%d\n", &port_client);
 
