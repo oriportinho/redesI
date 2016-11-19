@@ -54,12 +54,10 @@ void client(int port) {
 
 }
 
-void server(int port) {
+void server(int port, int port_client) {
   // char buffer[100];
   int newsockfd, listen_fd;
   socklen_t clilen;
-
-  printf("Port: %d, NewSockFd: %d, Listen_fd: %d\n", port, newsockfd, listen_fd);
 
   struct sockaddr_in servaddr, cli_addr;
   int pid;
@@ -67,8 +65,6 @@ void server(int port) {
   listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 
   bzero(&servaddr, sizeof(servaddr));
-
-  printf("Port: %d\n", servaddr.sin_port);
 
   servaddr.sin_family = AF_INET;
   servaddr.sin_addr.s_addr = htons(INADDR_ANY);
@@ -79,15 +75,11 @@ void server(int port) {
     exit(1);
   }
 
-printf("Port: %d, NewSockFd: %d, Listen_fd: %d\n", port, newsockfd, listen_fd);
-
   listen(listen_fd, 5);
   clilen = sizeof(cli_addr);
 
 	while(true) {
     newsockfd = accept(listen_fd, (struct sockaddr *) &cli_addr, &clilen);
-
-printf("Port: %d, NewSockFd: %d, Listen_fd: %d\n", port, newsockfd, listen_fd);
 
 		if(newsockfd < 0) {
 			perror("ERROR on accept");
@@ -114,7 +106,7 @@ printf("Port: %d, NewSockFd: %d, Listen_fd: %d\n", port, newsockfd, listen_fd);
         exit(1);
       }
 
-			printf("Port say: %s\n", bufferb);
+			printf("Port %d say: %s\n", port_client, bufferb);
 
 			exit(0);
 
@@ -126,15 +118,18 @@ printf("Port: %d, NewSockFd: %d, Listen_fd: %d\n", port, newsockfd, listen_fd);
 }
 
 int main(int argc, char *argv[]) {
-  int pid = fork();
+
   int port_server = atoi(argv[1]);
+  int port_client;
+  
+  printf("What is a destiny port?\n");
+  scanf("%d\n", &port_client);
+
+  int pid = fork();
 
   if(pid == 0) {
-    server(port_server);
+    server(port_server, port_client);
   }else {
-    int port_client;
-    printf("What is a destiny port?\n");
-    scanf("%d\n", &port_client);
     client(port_client);
   }
 

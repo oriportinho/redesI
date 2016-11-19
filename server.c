@@ -10,65 +10,83 @@
 #include <unistd.h>
 
 void server(int port) {
-  // char buffer[100];
-  int sockfd, newsockfd, listen_fd;
-  socklen_t clilen;
+  printf("TESTE");
+  int sock1_fd, sock2_fd, listen_fd;
+  socklen_t cli1_len, cli2_len;
 
-  struct sockaddr_in servaddr, cli_addr;
-  int pid;
+  struct sockaddr_in serv_addr, cli1_addr, cli2_addr;
 
   listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-  bzero(&servaddr, sizeof(servaddr));
+  bzero(&serv_addr, sizeof(serv_addr));
 
-  servaddr.sin_family = AF_INET;
-  servaddr.sin_addr.s_addr = htons(INADDR_ANY);
-  servaddr.sin_port = htons(port);
+  serv_addr.sin_family = AF_INET;
+  serv_addr.sin_addr.s_addr = htons(INADDR_ANY);
+  serv_addr.sin_port = htons(port);
 
-  if(bind(listen_fd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
+  if(bind(listen_fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
     perror("ERRO on binding.\n");
     exit(1);
   }
 
   listen(listen_fd, 5);
-  clilen = sizeof(cli_addr);
+  cli1_len = sizeof(cli1_addr);
+  cli2_len = sizeof(cli2_addr);
 
 	while(true) {
-    newsockfd = accept(listen_fd, (struct sockaddr *) &cli_addr, &clilen);
+    sock1_fd = accept(listen_fd, (struct sockaddr *) &cli1_addr, &cli1_len);
+    sock2_fd = accept(listen_fd, (struct sockaddr *) &cli2_addr, &cli2_len);
 
-		if(newsockfd < 0) {
+		if(sock1_fd < 0 || sock2_fd < 0) {
 			perror("ERROR on accept");
 			exit(1);
 		}
+    int pid = fork();
 
-		/* Create child process */
-		pid = fork();
-
-		if(pid < 0) {
-			perror("ERROR on fork");
-			exit(1);
-		}
-
-		if(pid == 0) {
-			close(sockfd);
+    if(pid == 0) {
       int n;
-      char bufferb[256];
-
-      bzero(bufferb, 256);
-      n = read(newsockfd, bufferb, 255);
+      char buffer[256];
+      bzero(buffer, 256);
+      printf("TESTE01\n");
+      n = read(sock1_fd, buffer, 255);
+      printf("TESTE02\n");
 
       if(n < 0) {
         perror("ERRO reading from socket.\n");
         exit(1);
       }
 
-			printf("Port %d say: %s\n", bufferb);
+      printf("Port %d say: %s\n", sock1_fd, buffer);
+      exit(0);
 
-			exit(0);
+    }else{
+      int n;
+      char buffer[256];
+      bzero(buffer, 256);
+      printf("TESTE11\n");
+      n = read(sock2_fd, buffer, 255);
+      printf("TESTE12\n");
 
-		}else {
-			close(newsockfd);
-		}
+      if(n < 0) {
+        perror("ERRO reading from socket.\n");
+        exit(1);
+      }
 
-	}
+      printf("Port %d say: %s\n", sock2_fd, buffer);
+      exit(0);
+
+    }
+  }
+}
+
+
+int main (int argc, char *argv[]) {
+  printf("TESTE01\n");
+
+  int port_server = atoi(argv[1]);
+
+  printf("TESTE01\n");
+  server(port_server);
+  printf("TESTE01\n");
+
 }
