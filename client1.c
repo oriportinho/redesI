@@ -56,12 +56,4 @@ void client(int port) {
 int main(int argc, char *argv[]) {
   int port_client = atoi(argv[1]);
   client(port_client);
-
-
-    // server(port_server);
-    //
-    // int port_client;
-    // printf("What is a destiny port?\n");
-    // scanf("%d\n", &port_client);
-
 }
