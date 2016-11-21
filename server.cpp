@@ -10,7 +10,7 @@
 #include <sys/time.h>
 
 #define MAX_CLIENTS 2
-#define MAX_BUFFER 1025
+#define MAX_BUFFER 1024
 
 int main(int argc , char *argv[]) {
   int opt = 1;

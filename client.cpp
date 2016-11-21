@@ -8,7 +8,7 @@
 #include <sys/socket.h>
 
 #define SERVER_IP "127.0.0.1"
-#define MAX_BUFFER 1025
+#define MAX_BUFFER 1024
 
 main(int argc , char *argv[]) {
   char buffer[MAX_BUFFER];
@@ -60,15 +60,23 @@ main(int argc , char *argv[]) {
    while(strcmp(buffer,"exit();") != 0) {
     // Try to implement a fork to parallel send and receive
 
-    // Send a buffer
     printf(">: ");
-    gets(buffer);
-    send(skt, buffer, strlen(buffer), 0);
+    int pid = fork();
 
-    // Receive a buffer
-    tbuf = recv(skt, buffer, strlen(buffer), 0);
-    buffer[tbuf] = 0x00;
-    printf (">: %s\n",buffer);
+    if(pid == 0) {
+      // Send a buffer
+      scanf("%s", buffer);
+      // gets(buffer);
+      send(skt, buffer, MAX_BUFFER, 0);
+      exit(1);
+    }else {
+      // Receive a buffer
+      tbuf = recv(skt, buffer, MAX_BUFFER, 0);
+      buffer[tbuf] = 0x00;
+      printf (">: %s\n",buffer);
+    }
+
+
   }
 
   // End connection
