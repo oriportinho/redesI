@@ -1,64 +1,93 @@
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-
-#include <unistd.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 
-// #include <arpa/inet.h>
-// #include <netinet/in.h>
 
-#define SERVER_PORT  5432
-// #define MAX_PENDING  5
-#define MAX_LINE     256
+#define SERVER_IP "127.0.0.1"
+#define BYTE 1024
+#define PORTA 8585
+#define TITULO "\n    ############### BeM VinDo ###############\n\n"
 
-int main(int argc, char * argv[]) {
-  struct hostent *hp;
-  struct sockaddr_in sin;
-  char *host;
-  char buf[MAX_LINE];
-  int s;
-  socklen_t len;
+void imprimirAguarde(void);
 
-  if(argc == 2) {
-    host = argv[1];
-  }else {
-    fprintf(stderr, "usage simplex-talk host\n");
-    exit(1);
+/************************
+*          MAIN         *
+************************/
+main ()
+{
+
+  char mensagem[BYTE], *loc;
+  int tbuf, skt, escolha;
+  struct sockaddr_in serv;
+  system("clear");
+
+  /**INICIALIZA ESTRUTURA SOCKETS*/
+  skt = socket(AF_INET, SOCK_STREAM, 0);
+  serv.sin_family = AF_INET;
+  serv.sin_addr.s_addr = inet_addr(SERVER_IP);
+  serv.sin_port = htons (PORTA);
+  memset (&(serv.sin_zero), 0x00, sizeof (serv.sin_zero));
+
+  /**INICIA COMUNICAÇÃO COM SERVIDOR*/
+  while(connect (skt, (struct sockaddr *)&serv, sizeof (struct sockaddr)) != 0){
+    imprimirAguarde();      ///AGUARDA SERVIDOR SE COMUNICAR
   }
+  printf(">> A Conexao com o Servidor %s foi estabelecida na porta %d \n\n",SERVER_IP,PORTA);
+  printf(">> Envie /x pra sair \n\n");
 
-  // traduz nome do host para endereco de IP do host
-  hp = gethostbyname(host);
-  if(hp) {
-    fprintf(stderr, "simplex-talk: unknowm host: %s\n", host);
-    exit(1);
+
+  /**RECEBE MENSAGEM DO SERVIDOR*/
+  tbuf = recv (skt, mensagem, BYTE, 0);
+  mensagem[tbuf] = 0x00;
+  printf (">: %s\n",mensagem);
+
+  /**ENVIA MENSAGEM PARA O SERVIDOR*/
+  strcpy(mensagem, "Cliente diz: olá!!!");
+  send(skt, mensagem, strlen(mensagem), 0 );
+
+
+  /**LOOP DE COMUNICAÇÃO ENTRE CLIENTE E SERVIDOR*/
+  do{
+    ///envia
+    printf("> ");
+    gets(mensagem);
+    send(skt, mensagem, strlen(mensagem), 0);
+
+    ///recebe
+    tbuf = recv (skt, mensagem, BYTE, 0);
+    mensagem[tbuf] = 0x00;
+    printf (">: Servidor diz: %s\n",mensagem);
+
+  }while(strcmp(mensagem,"/x")!= 0);    ///COMUNICAÇÃO SE ENCERRA QUANDO USUARIO DIGITAR /X
+
+
+  /**FINALIZA CONEXÃO*/
+  close(skt);
+  printf (">>A conexao com o servidor foi finalizada!!!\n\n");
+  exit(0);
+}
+
+
+
+/**************************************************************
+*   FUNÇÃO RESPOSÁVEL POR IMPRIMIR MENSAGER NA TELA           *
+*   ENQUANTO AGUARDA ALGUM SERVIDOR ESTABELECER COMUNICAÇÃO   *
+***************************************************************/
+void imprimirAguarde(){
+  int i=0;
+  char dot[12] = "";
+  for(i=0; i<4;i++){
+    system("clear");
+    printf(TITULO);
+    printf("\n\nProcurando servidor.");
+    printf("\nAguarde %s\n\n", dot);
+    strcat(dot,".");
+    sleep(1);
   }
-
-  // monta estrutura de dados do endereco
-  bzero((char *)&sin, sizeof(sin));
-  sin.sin_family = AF_INET;
-  // bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
-  sin.sin_port = htons(SERVER_PORT);
-
-  // abertura abertura
-  if((s = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-    perror("simplex-talk: socket");
-    exit(1);
-  }
-  if(connect(s, (struct sockaddr *)&sin , sizeof(sin)) < 0) {
-    perror("simplex-talk: connect");
-    close(s);
-    exit(1);
-  }
-
-  // laco principal: obtem e envia linhas de texto
-  while(fgets(buf, sizeof(buf), stdin)) {
-    buf[MAX_LINE - 1] = '\0';
-    len = strlen(buf) + 1;
-    send(s, buf, len, 0);
-  }
-
+  strcpy(dot, "");
 }

@@ -1,54 +1,71 @@
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-
-#include <unistd.h>
-#include <string.h>
 #include <stdlib.h>
-// #include <arpa/inet.h>
-// #include <netinet/in.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <fcntl.h>
 
-#define SERVER_PORT  5432
-#define MAX_PENDING  5
-#define MAX_LINE     256
+#define PORTA 8585
+#define BYTE 1024
 
-int main() {
-  struct sockaddr_in sin;
-  char buf[MAX_LINE];
-  socklen_t len;
-  int s, new_s;
+main(){
+  char mensagem[BYTE], *loc;
+  int pontarq, tbuf, skt, escolha;
+  socklen_t tskt;
+  struct sockaddr_in serv;
 
-  // monta estrutura de enderecos
-  bzero((char *)&sin, sizeof(sin));
-  sin.sin_family = AF_INET;
-  sin.sin_addr.s_addr = INADDR_ANY;
-  sin.sin_port = htons(SERVER_PORT);
+  system("clear");
+  /**INICIALIZA ESTRUTURA SOCKETS*/
+  skt = socket(AF_INET, SOCK_STREAM, 0);
+  serv.sin_family = AF_INET;
+  serv.sin_addr.s_addr = INADDR_ANY;
+  serv.sin_port = htons (PORTA);
+  memset(&(serv.sin_zero),0x00,sizeof(serv.sin_zero));
+  tskt = sizeof(struct sockaddr_in);
 
-  // prepara abertura passiva
-  if((s = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-    perror("simplex-talk: socket");
-    exit(1);
-  }
+  printf("\n    ############### Server ###############\n\n");
+  /**SOCKET INICIALIZA LISTENER PARA OUVIR PORTA*/
+  bind(skt,(struct sockaddr *)&serv,sizeof(struct sockaddr));
+  listen(skt,1);
+  printf(">> Servidor esta escutando na porta %d\n\n",PORTA);
 
-  if((bind(s, (struct sockaddr *) &sin, sizeof(sin))) < 0) {
-    perror("simplex-talk: bind");
-    exit(1);
-  }
+  /**RECEBE NOVAS CONEXÕES*/
+  //O problema acho que está aqui, preciso receber mais uma conexão para o sistema continuar.
+  skt = accept(skt,(struct sockaddr *)&serv,&tskt);
+  printf(">> A Conexao com o endereco %s foi estabelecida\n\n",inet_ntoa(serv.sin_addr));
 
-  listen(s, MAX_PENDING);
 
-  // espera conexao, depois recebe e imprime o texto
-  while(true) {
-    if((new_s = accept(s, (struct sockaddr *) &sin, &len)) < 0) {
-      perror("simplex-talk: accept");
-      exit(1);
-    }
+  /**ENVIA MENSAGEM PARA CLIENTE*/
+  strcpy(mensagem,"Servidor diz: olá!!!");
+  send(skt,mensagem,strlen(mensagem), 0);
+  // sendto()
+  // send()
+  // sent
+  /**RECEBE MENSAGEM DE CLIENTE*/
+  tbuf = recv(skt, mensagem,BYTE, 0);
+  mensagem[tbuf]=0x00;
+  printf(">: %s\n",mensagem);
 
-    while(len = recv(new_s, buf, sizeof(buf), 0)) {
-      fputs(buf, stdout);
-    }
-    close(new_s);
-  }
+
+  /**LOOP DE COMUNICAÇÃO ENTRE CLIENTE E SERVIDOR*/
+  do{
+    ///recebe
+    tbuf = recv(skt,mensagem,BYTE,0);
+    mensagem[tbuf]=0x00;
+    printf(">: Cliente diz: %s\n",mensagem);
+
+    ///envia
+    printf("> ");
+    gets(mensagem);
+    send(skt, mensagem, strlen(mensagem), 0);
+
+
+  }while(strcmp(mensagem,"/x") != 0); ///COMUNICAÇÃO SE ENCERRA QUANDO USUARIO ENVIAR MSG= /X
+
+  close(skt);
+  printf(">> A Conexao com o host %s foi encerrada!!!\n\n",inet_ntoa(serv.sin_addr));
+  exit(0);
 }
