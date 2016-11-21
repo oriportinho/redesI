@@ -9,13 +9,14 @@
 #include <string.h>
 #include <unistd.h>
 
+#define MAX_LINE 255
+
 void server(int port1, int port2) {
-  int sock1_fd, sock2_fd, listen_fd;
+  int sock1_fd, sock2_fd;
   socklen_t cli1_len, cli2_len;
 
-  struct sockaddr_in serv_addr, cli1_addr, cli2_addr;
+  struct sockaddr_in cli1_addr, cli2_addr;
 
-  // listen_fd = socket(AF_INET, SOCK_STREAM, 0);
   sock1_fd = socket(AF_INET, SOCK_STREAM, 0);
   sock2_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -40,7 +41,6 @@ void server(int port1, int port2) {
     exit(1);
   }
 
-  // listen(listen_fd, 5);
   listen(sock1_fd, 6);
   listen(sock2_fd, 7);
 
@@ -49,29 +49,36 @@ void server(int port1, int port2) {
 
   printf("lkklfskf\n");
 	while(true) {
-    int pid = 0;//fork();
+    // int pid = 0;//fork();
     int sock1_accept = accept(sock1_fd, (struct sockaddr *) &cli1_addr, &cli1_len);
     if(sock1_accept < 0) {
       perror("ERROR on accept in socket 1");
       exit(1);
     }
 
-    int n;
-    char buffer[256];
-    bzero(buffer, 256);
-    n = read(sock1_fd, buffer, 255);
-    write(sock2_fd, buffer, 255);
+    char buffer[MAX_LINE];
+    // bzero(buffer, MAX_LINE);
+    int len;
+    while(len = recv(sock1_accept, buffer, sizeof(buffer), 0)) {
 
-    if(n < 0) {
-      perror("ERRO reading from socket.\n");
-      exit(1);
+      fputs(buffer, stdout);
+      close(sock1_accept);
     }
-printf("%d\n", pid);
 
-printf("DSSD");
-
-
-printf("Port %d say: %s\n", sock1_fd, buffer);
+    // int n;
+    // char buffer[256];
+    // bzero(buffer, 256);
+    // n = read(sock1_fd, buffer, 255);
+    // printf("DSASDAASD\n");
+    // printf("!%s!\n", buffer);
+    // write(sock2_fd, buffer, 255);/////////ERRO
+    //
+    // if(n < 0) {
+    //   perror("ERRO reading from socket.\n");
+    //   exit(1);
+    // }
+    //
+    // printf("Port %d say: %s\n", sock1_fd, buffer);
     //if(pid == 0) {
     //  exit(0);
 
