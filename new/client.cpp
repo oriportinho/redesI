@@ -10,32 +10,35 @@
 
 #define SERVER_IP "127.0.0.1"
 #define BYTE 1024
-#define PORTA 8585
+#define PORTA 8888//8585
 #define TITULO "\n    ############### BeM VinDo ###############\n\n"
 
-void imprimirAguarde(void);
-
-/************************
-*          MAIN         *
-************************/
-main ()
-{
-
+main() {
   char mensagem[BYTE], *loc;
   int tbuf, skt, escolha;
   struct sockaddr_in serv;
   system("clear");
 
-  /**INICIALIZA ESTRUTURA SOCKETS*/
+  // INICIALIZA ESTRUTURA SOCKETS
   skt = socket(AF_INET, SOCK_STREAM, 0);
   serv.sin_family = AF_INET;
   serv.sin_addr.s_addr = inet_addr(SERVER_IP);
   serv.sin_port = htons (PORTA);
   memset (&(serv.sin_zero), 0x00, sizeof (serv.sin_zero));
 
-  /**INICIA COMUNICAÇÃO COM SERVIDOR*/
+  // INICIA COMUNICAÇÃO COM SERVIDOR
   while(connect (skt, (struct sockaddr *)&serv, sizeof (struct sockaddr)) != 0){
-    imprimirAguarde();      ///AGUARDA SERVIDOR SE COMUNICAR
+    int i=0;
+    char dot[12] = "";
+    for(i=0; i<4;i++){
+      system("clear");
+      printf(TITULO);
+      printf("\n\nProcurando servidor.");
+      printf("\nAguarde %s\n\n", dot);
+      strcat(dot,".");
+      sleep(1);
+    }
+    strcpy(dot, "");
   }
   printf(">> A Conexao com o Servidor %s foi estabelecida na porta %d \n\n",SERVER_IP,PORTA);
   printf(">> Envie /x pra sair \n\n");
@@ -47,7 +50,7 @@ main ()
   printf (">: %s\n",mensagem);
 
   /**ENVIA MENSAGEM PARA O SERVIDOR*/
-  strcpy(mensagem, "Cliente diz: olá!!!");
+  strcpy(mensagem, "estabelecida coneccao.");
   send(skt, mensagem, strlen(mensagem), 0 );
 
 
@@ -70,24 +73,4 @@ main ()
   close(skt);
   printf (">>A conexao com o servidor foi finalizada!!!\n\n");
   exit(0);
-}
-
-
-
-/**************************************************************
-*   FUNÇÃO RESPOSÁVEL POR IMPRIMIR MENSAGER NA TELA           *
-*   ENQUANTO AGUARDA ALGUM SERVIDOR ESTABELECER COMUNICAÇÃO   *
-***************************************************************/
-void imprimirAguarde(){
-  int i=0;
-  char dot[12] = "";
-  for(i=0; i<4;i++){
-    system("clear");
-    printf(TITULO);
-    printf("\n\nProcurando servidor.");
-    printf("\nAguarde %s\n\n", dot);
-    strcat(dot,".");
-    sleep(1);
-  }
-  strcpy(dot, "");
 }
