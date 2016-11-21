@@ -7,70 +7,72 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-
 #define SERVER_IP "127.0.0.1"
-#define BYTE 1024
-#define PORTA 8888//8585
-#define TITULO "\n    ############### BeM VinDo ###############\n\n"
+#define MAX_BUFFER 1025
 
-main() {
-  char mensagem[BYTE], *loc;
-  int tbuf, skt, escolha;
+main(int argc , char *argv[]) {
+  char buffer[MAX_BUFFER];
+  int tbuf, skt, port;
   struct sockaddr_in serv;
+
+  // Define port
+  if(argc >= 2) {
+    port = atoi(argv[1]);
+  }else {
+    port = 20050;
+  }
   system("clear");
 
-  // INICIALIZA ESTRUTURA SOCKETS
+  // Inicialization socket
   skt = socket(AF_INET, SOCK_STREAM, 0);
   serv.sin_family = AF_INET;
   serv.sin_addr.s_addr = inet_addr(SERVER_IP);
-  serv.sin_port = htons (PORTA);
-  memset (&(serv.sin_zero), 0x00, sizeof (serv.sin_zero));
+  serv.sin_port = htons (port);
+  memset(&(serv.sin_zero), 0x00, sizeof (serv.sin_zero));
 
-  // INICIA COMUNICAÇÃO COM SERVIDOR
-  while(connect (skt, (struct sockaddr *)&serv, sizeof (struct sockaddr)) != 0){
+  // Comunication with server
+  while(connect (skt, (struct sockaddr *)&serv, sizeof (struct sockaddr)) != 0) {
     int i=0;
     char dot[12] = "";
-    for(i=0; i<4;i++){
+    for(i = 0; i < 4; i++) {
       system("clear");
-      printf(TITULO);
-      printf("\n\nProcurando servidor.");
-      printf("\nAguarde %s\n\n", dot);
+      printf("\n\nSearch for server.");
+      printf("\nPlease wait %s\n\n", dot);
       strcat(dot,".");
       sleep(1);
     }
     strcpy(dot, "");
   }
-  printf(">> A Conexao com o Servidor %s foi estabelecida na porta %d \n\n",SERVER_IP,PORTA);
-  printf(">> Envie /x pra sair \n\n");
+  printf(">> Server connection: %s \n", SERVER_IP);
+  printf(">> in port: %d \n", port);
+  printf(">> To exit --> exit();\n\n");
 
+  // Receive mensagem from server
+  tbuf = recv(skt, buffer, strlen(buffer), 0);
+  buffer[tbuf] = 0x00;
+  printf(">: %s\n",buffer);
 
-  /**RECEBE MENSAGEM DO SERVIDOR*/
-  tbuf = recv (skt, mensagem, BYTE, 0);
-  mensagem[tbuf] = 0x00;
-  printf (">: %s\n",mensagem);
+  // Send mensagem from server
+  strcpy(buffer, "\n");
+  send(skt, buffer, strlen(buffer), 0);
 
-  /**ENVIA MENSAGEM PARA O SERVIDOR*/
-  strcpy(mensagem, "estabelecida coneccao.");
-  send(skt, mensagem, strlen(mensagem), 0 );
+  // Main loop, comunications between client and server
+   while(strcmp(buffer,"exit();") != 0) {
+    // Try to implement a fork to parallel send and receive
 
+    // Send a buffer
+    printf(">: ");
+    gets(buffer);
+    send(skt, buffer, strlen(buffer), 0);
 
-  /**LOOP DE COMUNICAÇÃO ENTRE CLIENTE E SERVIDOR*/
-  do{
-    ///envia
-    printf("> ");
-    gets(mensagem);
-    send(skt, mensagem, strlen(mensagem), 0);
+    // Receive a buffer
+    tbuf = recv(skt, buffer, strlen(buffer), 0);
+    buffer[tbuf] = 0x00;
+    printf (">: %s\n",buffer);
+  }
 
-    ///recebe
-    tbuf = recv (skt, mensagem, BYTE, 0);
-    mensagem[tbuf] = 0x00;
-    printf (">: Servidor diz: %s\n",mensagem);
-
-  }while(strcmp(mensagem,"/x")!= 0);    ///COMUNICAÇÃO SE ENCERRA QUANDO USUARIO DIGITAR /X
-
-
-  /**FINALIZA CONEXÃO*/
+  // End connection
   close(skt);
-  printf (">>A conexao com o servidor foi finalizada!!!\n\n");
   exit(0);
+  return 0;
 }
