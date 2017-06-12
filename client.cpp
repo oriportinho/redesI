@@ -9,6 +9,7 @@
 
 #define SERVER_IP "127.0.0.1"
 #define MAX_BUFFER 1024
+#define CIPHER_KEY 3
 
 main(int argc , char *argv[]) {
   char buffer[MAX_BUFFER];
@@ -34,7 +35,8 @@ main(int argc , char *argv[]) {
   while(connect (skt, (struct sockaddr *)&serv, sizeof (struct sockaddr)) != 0) {
     int i=0;
     char dot[12] = "";
-    for(i = 0; i < 4; i++) {
+    // Waiting connections
+    for(i = 0; i < 10; i++) {
       system("clear");
       printf("\n\nSearch for server.");
       printf("\nPlease wait %s\n\n", dot);
@@ -50,7 +52,7 @@ main(int argc , char *argv[]) {
   // Receive mensagem from server
   tbuf = recv(skt, buffer, strlen(buffer), 0);
   buffer[tbuf] = 0x00;
-  printf(">: %s\n",buffer);
+  printf("%s\n",buffer);
 
   // Send mensagem from server
   strcpy(buffer, "\n");
@@ -59,26 +61,37 @@ main(int argc , char *argv[]) {
   // Main loop, comunications between client and server
    while(strcmp(buffer,"exit();") != 0) {
     // Try to implement a fork to parallel send and receive
-
-    // printf(">: ");
     int pid = fork();
 
     if(pid == 0) {
       // Send a buffer
+      printf(">: ");
       scanf("%s", buffer);
       send(skt, buffer, MAX_BUFFER, 0);
       exit(1);
+
     }else {
+
       // Receive a buffer
       tbuf = recv(skt, buffer, MAX_BUFFER, 0);
       buffer[tbuf] = 0x00;
-      if(strlen(buffer) > 0) {
-        printf ("%s\n", buffer);
+      if (strlen(buffer) > 0) {
+        if (buffer[0] != '\n') {
 
+          // Application Cesar Chipher only in a letters
+          for (size_t i = 0; i < MAX_BUFFER; i++) {
+            if (buffer[i] >= 'a' && buffer[i] <= 'z') {
+              buffer[i] = 'a' + ((buffer[i] + CIPHER_KEY - 'a') % 26);
+            } else if (buffer[i] >= 'A' && buffer[i] <= 'Z') {
+              buffer[i] = 'A' + ((buffer[i] + CIPHER_KEY - 'A') % 26);
+            }
+          }
+
+          // Print the answer in the client terminal
+          printf("Client say: %s\n", buffer);
+        }
       }
     }
-
-
   }
 
   // End connection
